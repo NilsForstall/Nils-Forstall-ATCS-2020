@@ -5,5 +5,5 @@
 
 int main(void)
 {
-	printf("Brazilian Fumarole")
+	printf("Brazilian Fumarole Interpreter\n");
 }
