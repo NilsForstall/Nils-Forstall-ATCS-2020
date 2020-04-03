@@ -12,7 +12,7 @@ How do I save the memory to the right location?
 
 
 
-
+#include "limits.h"
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
@@ -28,36 +28,75 @@ const char DEC = '-';
 const char PRINT = '*';
 const char BEGLOOP = '(';
 const char ENDLOOP = ')';
-const int MAX_SIZE = 1000;
+const int MAX_SIZE = 100000;
 
 
-int loop_level = -1;
-char** loop_instructions[10][100];
-char* save_instructions = NULL;
-char* saved_instruction = NULL;
 FILE *bf;
 char bags[MAX_SIZE];
 
-//void next()
 
-char get_next_instruction()
-{
-	if (loop_level < 0)
-	{
-		return fgetc(bf);
-	}
-	else
-	{
-		return loop_instructions[loop_level];//NOT COMPLETE
-	}
-}
+  
+// A structure to represent a stack 
+// C program for linked list implementation of stack 
+  
+// A structure to represent a stack 
+struct StackNode 
+{ 
+    char* data; 
+    struct StackNode* next; 
+}; 
+  
+struct StackNode* newNode(char* char_pointer) 
+{ 
+    struct StackNode* stackNode = (struct StackNode*)malloc(sizeof(struct StackNode)); 
+    stackNode->data = char_pointer; 
+    stackNode->next = NULL; 
+    return stackNode; 
+} 
+  
+int isEmpty(struct StackNode* root) 
+{ 
+    return !root; 
+} 
+  
+void push(struct StackNode** root, char* data) 
+{ 
+    struct StackNode* stackNode = newNode(data); 
+    stackNode->next = *root; 
+    *root = stackNode; 
+   // printf("pushed to stack\n"); 
+} 
+  
+char* pop(struct StackNode** root) 
+{ 
+    if (isEmpty(*root)) 
+        return NULL; 
+    struct StackNode* temp = *root; 
+    *root = (*root)->next; 
+    char* popped = temp->data; 
+    free(temp); 
+  
+    return popped; 
+} 
+  
+char* peek(struct StackNode* root) 
+{ 
+    if (isEmpty(root)) 
+        return NULL; 
+    return root->data; 
+} 
 
-int excecute_instructions(char* pointer, char end_condition)
+
+
+
+int excecute_instructions(char* file_as_string)
 {
-	char instruction = fgetc(bf);
-	while(instruction != end_condition)
+	char* instruction_pointer = file_as_string;
+	struct StackNode* beg_loop_pointers = NULL;
+	char instruction = *instruction_pointer;
+	char* pointer = bags;
+	while(instruction != 0)
 	{
-		// printf("%c", instruction);
 		if(instruction == INC)
 		{
 			*pointer = *pointer + 1;
@@ -116,33 +155,28 @@ int excecute_instructions(char* pointer, char end_condition)
 			}
 			else
 			{
-				loop_level += 1;
-				save_instructions = *loop_instructions[loop_level][0]; //want this to be a pointer to a char
+				push(&beg_loop_pointers, instruction_pointer); 
 			}
 		}
 		else if(instruction == ENDLOOP)
 		{
-			if(loop_level < 0)
+			if(isEmpty(beg_loop_pointers))
 			{
 				printf("ERROR: Parenthesis not lined up.");
 				return 0;
 			}
 			if(*pointer == 0)
 			{
-				loop_level -= 1;
+				pop(&beg_loop_pointers);
 			}
 			else			//repeat the loop
 			{
-
+				instruction_pointer = peek(beg_loop_pointers);
 			}
 
 		}
-		instruction = fgetc(bf);
-		if (save_instructions != NULL)
-		{
-			*save_instructions = instruction;
-			save_instructions += 1;
-		}
+		instruction_pointer = instruction_pointer + 1;
+		instruction = *instruction_pointer;
 	}
 	printf("\n");
 	return 1;
@@ -156,6 +190,14 @@ int main(void)
 		printf("Failed to open bfcode.\n");
 		return 0;
 	}
-	char* pointer = bags;
-	return excecute_instructions(pointer, -1);
+	char* file_as_string;
+	char single_char = fgetc(bf);
+	while (single_char != -1)
+	{
+		strncat(file_as_string, &single_char, 1);
+		single_char = fgetc(bf);
+	}
+	//printf("%s", file_as_string);
+
+	return excecute_instructions(file_as_string);
 }
